@@ -14,10 +14,10 @@ Based almost entirely on the excellent [foursquare](https://github.com/mLewisLog
 ### Authentication
 
     # Construct the client object
-    client = untappd.Untappd(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET', redirect_urL='YOUR_REDIRECT_URL')
+    client = untappd.Untappd(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET', redirect_url='YOUR_REDIRECT_URL')
 
     # Build the authorization url for your app
-    auth_urL = client.oauth.auth_url()
+    auth_url = client.oauth.auth_url()
 
 Redirect your user to the address *auth_uri* and let them authorize your app. They will then be redirected to your *redirect_urL*, with a query paramater of code=XX_CODE_RETURNED_IN_REDIRECT_XX. In your webserver, parse out the *code* value, and use it to call client.oauth.get_token()
 
