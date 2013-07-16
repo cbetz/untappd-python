@@ -19,7 +19,7 @@ Based almost entirely on the excellent [foursquare](https://github.com/mLewisLog
     # Build the authorization url for your app
     auth_url = client.oauth.auth_url()
 
-Redirect your user to the address *auth_uri* and let them authorize your app. They will then be redirected to your *redirect_urL*, with a query paramater of code=XX_CODE_RETURNED_IN_REDIRECT_XX. In your webserver, parse out the *code* value, and use it to call client.oauth.get_token()
+Redirect your user to the address *auth_uri* and let them authorize your app. They will then be redirected to your *redirect_url*, with a query paramater of code=XX_CODE_RETURNED_IN_REDIRECT_XX. In your webserver, parse out the *code* value, and use it to call client.oauth.get_token()
 
     # Interrogate Untappd to get the user's access_token
     access_token = client.oauth.get_token('XX_CODE_RETURNED_IN_REDIRECT_XX')
