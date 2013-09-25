@@ -255,5 +255,5 @@ def _check_response(data):
             logging.error(u'Unknown error type: {0}'.format(meta.get('error_type')))
             raise UntappdException(meta.get('error_detail'))
     else:
-        loggin.error(u'Response format invalid, missing meta property') # body is printed in warning above
+        logging.error(u'Response format invalid, missing meta property') # body is printed in warning above
         raise UntappdException('Missing meta')
