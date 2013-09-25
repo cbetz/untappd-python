@@ -172,6 +172,9 @@ class Untappd(object):
             """Stores the request function for retrieving data"""
             self.requester = requester
 
+        def __call__(self, identity):
+            return self.GET('info/{id}'.format(id=identity))
+
         def _expanded_path(self, path=None):
             """Gets the expanded path, given this endpoint"""
             return '/{expanded_path}'.format(
@@ -189,14 +192,8 @@ class Untappd(object):
     class Beer(_Endpoint):
         endpoint = 'beer'
 
-        def __call__(self, BEER_ID):
-            return self.GET('info/{BEER_ID}'.format(BEER_ID=BEER_ID))
-
     class User(_Endpoint):
         endpoint = 'user'
-
-        def __call__(self):
-            return self.GET('info')
 
 """
 Network helper functions
