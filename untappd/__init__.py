@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 # (c) 2013 Chris Betz
 import logging
-logging.basicConfig()
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
     import simplejson as json
