@@ -195,6 +195,9 @@ class Untappd(object):
     class User(_Endpoint):
         endpoint = 'user'
 
+    class Venue(_Endpoint):
+        endpoint = 'venue'
+
 """
 Network helper functions
 """
