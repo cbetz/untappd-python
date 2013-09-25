@@ -45,7 +45,7 @@ class UntappdException(Exception): pass
 # Specific exceptions
 class InvalidAuth(UntappdException): pass
 
-error_types = {
+ERROR_TYPES = {
     'invalid_auth': InvalidAuth
 }
 
@@ -248,7 +248,7 @@ def _check_response(data):
     if meta:
         # see: https://untappd.com/api/docs/v4
         if meta.get('code') in (200, 409): return data
-        exc = error_types.get(meta.get('error_type'))
+        exc = ERROR_TYPES.get(meta.get('error_type'))
         if exc:
             raise exc(meta.get('error_detail'))
         else:
