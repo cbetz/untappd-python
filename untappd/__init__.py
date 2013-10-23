@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 # (c) 2013 Chris Betz
 import logging
-logging.basicConfig()
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
     import simplejson as json
@@ -45,7 +45,7 @@ class UntappdException(Exception): pass
 # Specific exceptions
 class InvalidAuth(UntappdException): pass
 
-error_types = {
+ERROR_TYPES = {
     'invalid_auth': InvalidAuth
 }
 
@@ -172,6 +172,9 @@ class Untappd(object):
             """Stores the request function for retrieving data"""
             self.requester = requester
 
+        def __call__(self, identity):
+            return self.GET('info/{id}'.format(id=identity))
+
         def _expanded_path(self, path=None):
             """Gets the expanded path, given this endpoint"""
             return '/{expanded_path}'.format(
@@ -189,14 +192,11 @@ class Untappd(object):
     class Beer(_Endpoint):
         endpoint = 'beer'
 
-        def __call__(self, BEER_ID):
-            return self.GET('info/{BEER_ID}'.format(BEER_ID=BEER_ID))
-
     class User(_Endpoint):
         endpoint = 'user'
 
-        def __call__(self):
-            return self.GET('info')
+    class Venue(_Endpoint):
+        endpoint = 'venue'
 
 """
 Network helper functions
@@ -248,12 +248,12 @@ def _check_response(data):
     if meta:
         # see: https://untappd.com/api/docs/v4
         if meta.get('code') in (200, 409): return data
-        exc = error_types.get(meta.get('error_type'))
+        exc = ERROR_TYPES.get(meta.get('error_type'))
         if exc:
             raise exc(meta.get('error_detail'))
         else:
             logging.error(u'Unknown error type: {0}'.format(meta.get('error_type')))
             raise UntappdException(meta.get('error_detail'))
     else:
-        loggin.error(u'Response format invalid, missing meta property') # body is printed in warning above
+        logging.error(u'Response format invalid, missing meta property') # body is printed in warning above
         raise UntappdException('Missing meta')
