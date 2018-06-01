@@ -181,7 +181,7 @@ class Untappd(object):
                 logging.error(error_message)
                 raise UntappdException(error_message)
             params = {'q' : query}
-            if kwargs:
+            if kwargs and search_options:
                 for option in search_options:
                     if option in kwargs:
                         params[option] = kwargs[option]
