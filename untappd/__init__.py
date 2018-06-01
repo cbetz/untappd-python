@@ -181,13 +181,13 @@ class Untappd(object):
             return self.GET('info/{id}'.format(id=identity))
 
         def search(self, query, *args, **kwargs):
-            if not searchable:
+            if not self.searchable:
                 error_message = u'This Untappd API endpoint is not searchable'
                 logging.error(error_message)
                 raise UntappdException(error_message)
             params = {'q' : query}
-            if kwargs and search_options:
-                for option in search_options:
+            if kwargs and self.search_options:
+                for option in self.search_options:
                     if option in kwargs:
                         params[option] = kwargs[option]
             return self.GET('search', params=params, reverse_path=True)
