@@ -180,10 +180,9 @@ class Untappd(object):
                 error_message = u'This Untappd API endpoint is not searchable'
                 logging.error(error_message)
                 raise UntappdException(error_message)
-            options = ['offset', 'limit', 'sort']
             params = {'q' : query}
             if kwargs:
-                for option in options:
+                for option in search_options:
                     if option in kwargs:
                         params[option] = kwargs[option]
             return self.GET('search', params=params, reverse_path=True)
@@ -209,6 +208,7 @@ class Untappd(object):
     class Beer(_Endpoint):
         endpoint = 'beer'
         searchable = True
+        search_options = ('offset', 'limit', 'sort')
 
     class User(_Endpoint):
         endpoint = 'user'
@@ -221,6 +221,7 @@ class Untappd(object):
     class Brewery(_Endpoint):
         endpoint = 'brewery'
         searchable = True
+        search_options = ('offset', 'limit')
 
 """
 Network helper functions
