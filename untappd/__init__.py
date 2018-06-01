@@ -9,11 +9,16 @@ try:
 except ImportError:
     import json
 
-import cStringIO as StringIO
 import inspect
 import math
 import time
-import urllib
+
+try:
+    import urllib.parse as urllib
+except ImportError:
+    import urllib
+
+from builtins import range
 
 # 3rd party libraries that might not be present during initial install
 #  but we need to import for the version #
@@ -228,10 +233,10 @@ Network helper functions
 """
 def _request_with_retry(url, headers={}, data=None):
     """Tries to load data from an endpoint using retries"""
-    for i in xrange(NUM_REQUEST_RETRIES):
+    for i in range(NUM_REQUEST_RETRIES):
         try:
             return _process_request_with_httplib2(url, headers, data)
-        except UntappdException, e:
+        except UntappdException as e:
             # Some errors don't bear repeating
             if e.__class__ in [InvalidAuth]: raise
             if ((i + 1) == NUM_REQUEST_RETRIES): raise
@@ -254,7 +259,7 @@ def _process_request_with_httplib2(url, headers={}, data=None):
         if response.status == 200:
             return data
         return _check_response(data)
-    except httplib2.HttpLib2Error, e:
+    except httplib2.HttpLib2Error as e:
         logging.error(e)
         raise UntappdException(u'Error connecting with Untappd API')
 
@@ -262,7 +267,7 @@ def _json_to_data(s):
     """Convert a response string to data"""
     try:
         return json.loads(s)
-    except ValueError, e:
+    except ValueError as e:
         logging.error('Invalid response: {0}'.format(e))
         raise UntappdException(e)
 
