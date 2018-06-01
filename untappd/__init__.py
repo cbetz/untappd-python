@@ -180,15 +180,12 @@ class Untappd(object):
                 error_message = u'This Untappd API endpoint is not searchable'
                 logging.error(error_message)
                 raise UntappdException(error_message)
-
             options = ['offset', 'limit', 'sort']
             params = {'q' : query}
-
             if kwargs:
                 for option in options:
                     if option in kwargs:
                         params[option] = kwargs[option]
-
             return self.GET('search', params=params, reverse_path=True)
 
         def _expanded_path(self, path=None, reverse_path=False):
