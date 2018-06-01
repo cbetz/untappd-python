@@ -175,31 +175,55 @@ class Untappd(object):
         def __call__(self, identity):
             return self.GET('info/{id}'.format(id=identity))
 
-        def _expanded_path(self, path=None):
+        def search(self, query, *args, **kwargs):
+            if not searchable:
+                error_message = u'This Untappd API endpoint is not searchable'
+                logging.error(error_message)
+                raise UntappdException(error_message)
+
+            options = ['offset', 'limit', 'sort']
+            params = {'q' : query}
+
+            if kwargs:
+                for option in options:
+                    if option in kwargs:
+                        params[option] = kwargs[option]
+
+            return self.GET('search', params=params, reverse_path=True)
+
+        def _expanded_path(self, path=None, reverse_path=False):
             """Gets the expanded path, given this endpoint"""
+            if reverse_path:
+                parts = (path, self.endpoint)
+            else:
+                parts = (self.endpoint, path)
             return '/{expanded_path}'.format(
-                expanded_path='/'.join(p for p in (self.endpoint, path) if p)
+                expanded_path='/'.join(p for p in parts if p)
             )
 
         def GET(self, path=None, *args, **kwargs):
             """Use the requester to get the data"""
-            return self.requester.GET(self._expanded_path(path), *args, **kwargs)
+            return self.requester.GET(self._expanded_path(path, kwargs.pop('reverse_path', False)), *args, **kwargs)
 
         def POST(self, path=None, *args, **kwargs):
             """Use the requester to post the data"""
-            return self.requester.POST(self._expanded_path(path), *args, **kwargs)
+            return self.requester.POST(self._expanded_path(path, kwargs.pop('reverse_path', False)), *args, **kwargs)
 
     class Beer(_Endpoint):
         endpoint = 'beer'
+        searchable = True
 
     class User(_Endpoint):
         endpoint = 'user'
+        searchable = False
 
     class Venue(_Endpoint):
         endpoint = 'venue'
+        searchable = False
 
     class Brewery(_Endpoint):
         endpoint = 'brewery'
+        searchable = True
 
 """
 Network helper functions
