@@ -25,6 +25,7 @@ setup(
     install_requires=[
         'httplib2>=0.7',
         'poster>=0.8',
+        'future',
     ],
     license='MIT License',
     keywords='untappd api',

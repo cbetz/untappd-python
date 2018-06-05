@@ -9,11 +9,16 @@ try:
 except ImportError:
     import json
 
-import cStringIO as StringIO
 import inspect
 import math
 import time
-import urllib
+
+try:
+    import urllib.parse as urllib
+except ImportError:
+    import urllib
+
+from builtins import range
 
 # 3rd party libraries that might not be present during initial install
 #  but we need to import for the version #
@@ -175,38 +180,63 @@ class Untappd(object):
         def __call__(self, identity):
             return self.GET('info/{id}'.format(id=identity))
 
-        def _expanded_path(self, path=None):
+        def search(self, query, *args, **kwargs):
+            if not self.searchable:
+                error_message = u'This Untappd API endpoint is not searchable'
+                logging.error(error_message)
+                raise UntappdException(error_message)
+            params = {'q' : query}
+            if kwargs and self.search_options:
+                for option in self.search_options:
+                    if option in kwargs:
+                        params[option] = kwargs[option]
+            return self.GET('search', params=params, reverse_path=True)
+
+        def _expanded_path(self, path=None, reverse_path=False):
             """Gets the expanded path, given this endpoint"""
+            if reverse_path:
+                parts = (path, self.endpoint)
+            else:
+                parts = (self.endpoint, path)
             return '/{expanded_path}'.format(
-                expanded_path='/'.join(p for p in (self.endpoint, path) if p)
+                expanded_path='/'.join(p for p in parts if p)
             )
 
         def GET(self, path=None, *args, **kwargs):
             """Use the requester to get the data"""
-            return self.requester.GET(self._expanded_path(path), *args, **kwargs)
+            return self.requester.GET(self._expanded_path(path, kwargs.pop('reverse_path', False)), *args, **kwargs)
 
         def POST(self, path=None, *args, **kwargs):
             """Use the requester to post the data"""
-            return self.requester.POST(self._expanded_path(path), *args, **kwargs)
+            return self.requester.POST(self._expanded_path(path, kwargs.pop('reverse_path', False)), *args, **kwargs)
 
     class Beer(_Endpoint):
         endpoint = 'beer'
+        searchable = True
+        search_options = ('offset', 'limit', 'sort')
 
     class User(_Endpoint):
         endpoint = 'user'
+        searchable = False
 
     class Venue(_Endpoint):
         endpoint = 'venue'
+        searchable = False
+
+    class Brewery(_Endpoint):
+        endpoint = 'brewery'
+        searchable = True
+        search_options = ('offset', 'limit')
 
 """
 Network helper functions
 """
 def _request_with_retry(url, headers={}, data=None):
     """Tries to load data from an endpoint using retries"""
-    for i in xrange(NUM_REQUEST_RETRIES):
+    for i in range(NUM_REQUEST_RETRIES):
         try:
             return _process_request_with_httplib2(url, headers, data)
-        except UntappdException, e:
+        except UntappdException as e:
             # Some errors don't bear repeating
             if e.__class__ in [InvalidAuth]: raise
             if ((i + 1) == NUM_REQUEST_RETRIES): raise
@@ -229,7 +259,7 @@ def _process_request_with_httplib2(url, headers={}, data=None):
         if response.status == 200:
             return data
         return _check_response(data)
-    except httplib2.HttpLib2Error, e:
+    except httplib2.HttpLib2Error as e:
         logging.error(e)
         raise UntappdException(u'Error connecting with Untappd API')
 
@@ -237,7 +267,7 @@ def _json_to_data(s):
     """Convert a response string to data"""
     try:
         return json.loads(s)
-    except ValueError, e:
+    except ValueError as e:
         logging.error('Invalid response: {0}'.format(e))
         raise UntappdException(e)
 
