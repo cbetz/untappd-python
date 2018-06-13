@@ -81,7 +81,7 @@ class Untappd(object):
             payload = {
                 'client_id': self.client_id,
                 'client_secret': self.client_secret,
-                'grant_type': 'authorization_code',
+                'response_type': 'code',
                 'redirect_url': self.redirect_url,
                 'code': unicode(code),
             }
