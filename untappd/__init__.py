@@ -12,9 +12,10 @@ except ImportError:
 import inspect
 import time
 import requests
+from __future__ import unicode_literals
 
 __version__ = 0.2
-__author__ = u'Christopher Betz'
+__author__ = 'Christopher Betz'
 
 AUTH_ENDPOINT = 'https://untappd.com/oauth/authenticate/'
 TOKEN_ENDPOINT = 'https://untappd.com/oauth/authorize/'
@@ -67,7 +68,7 @@ class Untappd(object):
             """Gets the url a user needs to access to give up a user token"""
             data = {
                 'client_id': self.client_id,
-                'response_type': u'code',
+                'response_type': 'code',
                 'redirect_url': self.redirect_url,
             }
             return '{AUTH_ENDPOINT}?{params}'.format(AUTH_ENDPOINT=AUTH_ENDPOINT, params=urllib.urlencode(data))
@@ -75,20 +76,20 @@ class Untappd(object):
         def get_access_token(self, code):
             """Gets the auth token from a user's response"""
             if not code:
-                logging.error(u'Code not provided')
+                logging.error('Code not provided')
                 return None
             payload = {
                 'client_id': self.client_id,
                 'client_secret': self.client_secret,
-                'grant_type': u'authorization_code',
+                'grant_type': 'authorization_code',
                 'redirect_url': self.redirect_url,
                 'code': unicode(code),
             }
             # Build the token uri to request
-            url = u'{TOKEN_ENDPOINT}?{params}'.format(
+            url = '{TOKEN_ENDPOINT}?{params}'.format(
                 TOKEN_ENDPOINT=TOKEN_ENDPOINT,
                 params=urllib.urlencode(data))
-            logging.debug(u'GET: {0}'.format(url))
+            logging.debug('GET: {0}'.format(url))
             # Get the response from the token uri and attempt to parse
             data = self.requester.GET(TOKEN_ENDPOINT, payload=payload, enrich_payload=False)
             return data.get('response').get('access_token')
@@ -133,7 +134,7 @@ class Untappd(object):
                 payload = self._enrich_payload(kwargs.get('payload', {}))
             else:
                 payload = kwargs.get('payload')
-            logging.debug(u'{method} url: {url} payload:{payload}'.format(method=method, url=url, payload=u'* {0}'.format(payload) if payload else u''))
+            logging.debug('{method} url: {url} payload:{payload}'.format(method=method, url=url, payload='* {0}'.format(payload) if payload else ''))
             """Tries to load data from an endpoint using retries"""
             try_number = 1
             while try_number <= NUM_REQUEST_TRIES:
@@ -153,7 +154,7 @@ class Untappd(object):
                 else if method == 'POST':
                     response = requests.post(url, data=payload)
                 else:
-                    error_message = u'Invalid request method'
+                    error_message = 'Invalid request method'
                     logging.error(error_message)
                     raise UntappdException(error_message)
                 data = self._convert_json_to_data(response)
@@ -163,7 +164,7 @@ class Untappd(object):
 
             except requests.exceptions.RequestException as e:
                 logging.error(e)
-                raise UntappdException(u'Error connecting with Untappd API')
+                raise UntappdException('Error connecting with Untappd API')
 
         def _convert_json_to_data(s):
             """Convert a response string to data"""
@@ -184,10 +185,10 @@ class Untappd(object):
                 if exc:
                     raise exc(meta.get('error_detail'))
                 else:
-                    logging.error(u'Unknown error type: {0}'.format(meta.get('error_type')))
+                    logging.error('Unknown error type: {0}'.format(meta.get('error_type')))
                     raise UntappdException(meta.get('error_detail'))
             else:
-                logging.error(u'Response format invalid, missing meta property') # body is printed in warning above
+                logging.error('Response format invalid, missing meta property') # body is printed in warning above
                 raise UntappdException('Missing meta')
 
     class _Endpoint(object):
@@ -201,7 +202,7 @@ class Untappd(object):
 
         def search(self, query, **kwargs):
             if not self.searchable:
-                error_message = u'This Untappd API endpoint is not searchable'
+                error_message = 'This Untappd API endpoint is not searchable'
                 logging.error(error_message)
                 raise UntappdException(error_message)
             payload = {'q' : query}
