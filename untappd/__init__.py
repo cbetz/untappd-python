@@ -9,6 +9,11 @@ try:
 except ImportError:
     import json
 
+try:
+    import urllib.parse as urllib
+except ImportError:
+    import urllib
+
 import inspect
 import time
 import requests
