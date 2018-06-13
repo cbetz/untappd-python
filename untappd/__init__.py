@@ -128,7 +128,11 @@ class Untappd(object):
                 payload = self._enrich_payload(kwargs.get('payload', {}))
             else:
                 payload = kwargs.get('payload')
-            logging.debug('{method} url: {url} payload:{payload}'.format(method=method, url=url, payload='* {0}'.format(payload) if payload else ''))
+            logging.debug('{method} url: {url} payload:{payload}'.format(
+                method=method,
+                url=url,
+                payload='* {0}'.format(payload) if payload else ''
+            ))
             """Tries to load data from an endpoint using retries"""
             try_number = 1
             while try_number <= NUM_REQUEST_TRIES:
@@ -142,6 +146,7 @@ class Untappd(object):
                 time.sleep(1)
 
         def _process_request(self, method, url, payload):
+            """Make the request and handle exception processing"""
             try:
                 if method == 'GET':
                     response = requests.get(url, params=payload)
