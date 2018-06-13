@@ -223,7 +223,7 @@ class Untappd(object):
                 parts = (path, self.endpoint)
             else:
                 parts = (self.endpoint, path)
-            return '/{expanded_path}'.format(expanded_path='/'.join(p for p in parts if p))
+            return '/'.join(p for p in parts if p)
 
         def GET(self, path=None, **kwargs):
             """Use the requester to get the data"""
