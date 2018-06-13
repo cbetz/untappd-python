@@ -18,10 +18,10 @@ __author__ = u'Christopher Betz'
 
 AUTH_ENDPOINT = 'https://untappd.com/oauth/authenticate/'
 TOKEN_ENDPOINT = 'https://untappd.com/oauth/authorize/'
-API_ENDPOINT = 'https://api.untappd.com/v4'
+API_ENDPOINT = 'https://api.untappd.com/v4/'
 
-# Number of times to retry http requests
-NUM_REQUEST_RETRIES = 3
+# Number of times to try http requests
+NUM_REQUEST_TRIES = 3
 
 # Generic untappd exception
 class UntappdException(Exception): pass
@@ -136,13 +136,13 @@ class Untappd(object):
             logging.debug(u'{method} url: {url} payload:{payload}'.format(method=method, url=url, payload=u'* {0}'.format(payload) if payload else u''))
             """Tries to load data from an endpoint using retries"""
             try_number = 1
-            while try_number <= NUM_REQUEST_RETRIES:
+            while try_number <= NUM_REQUEST_TRIES:
                 try:
                     return self._process_request(method, url, payload)
                 except UntappdException as e:
                     # Some errors don't bear repeating
                     if e.__class__ in [InvalidAuth]: raise
-                    if (try_number == NUM_REQUEST_RETRIES): raise
+                    if (try_number == NUM_REQUEST_TRIES): raise
                     try_number += 1
                 time.sleep(1)
 
@@ -165,10 +165,10 @@ class Untappd(object):
                 logging.error(e)
                 raise UntappdException(u'Error connecting with Untappd API')
 
-        def _convert_json_to_data(json_string):
+        def _convert_json_to_data(s):
             """Convert a response string to data"""
             try:
-                return json.loads(json_string)
+                return json.loads(s)
             except ValueError as e:
                 logging.error('Invalid response: {0}'.format(e))
                 raise UntappdException(e)
