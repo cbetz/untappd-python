@@ -5,11 +5,6 @@ import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
-    import simplejson as json
-except ImportError:
-    import json
-
-try:
     import urllib.parse as urllib
 except ImportError:
     import urllib
@@ -71,12 +66,12 @@ class Untappd(object):
 
         def get_auth_url(self):
             """Gets the url a user needs to access to give up a user token"""
-            data = {
+            payload = {
                 'client_id': self.client_id,
                 'response_type': 'code',
                 'redirect_url': self.redirect_url,
             }
-            return '{AUTH_ENDPOINT}?{params}'.format(AUTH_ENDPOINT=AUTH_ENDPOINT, params=urllib.urlencode(data))
+            return '{0}?{1}'.format(AUTH_ENDPOINT, urllib.urlencode(payload))
 
         def get_access_token(self, code):
             """Gets the auth token from a user's response"""
@@ -90,15 +85,9 @@ class Untappd(object):
                 'redirect_url': self.redirect_url,
                 'code': unicode(code),
             }
-            # Build the token uri to request
-            url = '{TOKEN_ENDPOINT}?{params}'.format(
-                TOKEN_ENDPOINT=TOKEN_ENDPOINT,
-                params=urllib.urlencode(data))
-            logging.debug('GET: {0}'.format(url))
             # Get the response from the token uri and attempt to parse
             data = self.requester.GET(TOKEN_ENDPOINT, payload=payload, enrich_payload=False)
             return data.get('response').get('access_token')
-
 
     class Requester(object):
         """Api requesting object"""
@@ -162,19 +151,18 @@ class Untappd(object):
                     error_message = 'Invalid request method'
                     logging.error(error_message)
                     raise UntappdException(error_message)
-                data = self._convert_json_to_data(response)
+                data = self._decode_json_response(response)
                 if response.status_code == requests.codes.ok:
                     return data
                 return self._check_response(data)
-
             except requests.exceptions.RequestException as e:
                 logging.error(e)
                 raise UntappdException('Error connecting with Untappd API')
 
-        def _convert_json_to_data(s):
-            """Convert a response string to data"""
+        def _decode_json_response(response):
+            """Decode a json response"""
             try:
-                return json.loads(s)
+                return response.json()
             except ValueError as e:
                 logging.error('Invalid response: {0}'.format(e))
                 raise UntappdException(e)
@@ -193,8 +181,9 @@ class Untappd(object):
                     logging.error('Unknown error type: {0}'.format(meta.get('error_type')))
                     raise UntappdException(meta.get('error_detail'))
             else:
-                logging.error('Response format invalid, missing meta property') # body is printed in warning above
-                raise UntappdException('Missing meta')
+                error_message = 'Response format invalid, missing meta property'
+                logging.error(error_message) # body is printed in warning above
+                raise UntappdException(error_message)
 
     class _Endpoint(object):
         """Generic endpoint class"""
