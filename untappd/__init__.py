@@ -48,7 +48,7 @@ class Untappd(object):
         """Dynamically attach endpoint callables to this client"""
         for name, endpoint in inspect.getmembers(self):
             if inspect.isclass(endpoint) and issubclass(endpoint, self._Endpoint) and (endpoint is not self._Endpoint):
-                endpoint_instance = endpoint(self.base_requester)
+                endpoint_instance = endpoint(self.requester)
                 setattr(self, endpoint_instance.endpoint, endpoint_instance)
 
     def set_access_token(self, access_token):
