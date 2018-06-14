@@ -197,7 +197,7 @@ class Untappd(object):
             self.requester = requester
 
         def __call__(self, id):
-            return self.GET('info/{id}'.format(id=id))
+            return self.GET('info/{0}'.format(id))
 
         def search(self, query, **kwargs):
             if not self.searchable:
