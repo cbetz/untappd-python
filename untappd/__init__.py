@@ -203,16 +203,46 @@ class Untappd(object):
 
     class Beer(_Endpoint):
         endpoint_base = 'beer'
-        get_endpoints = ('info',)
-
-    class User(_Endpoint):
-        endpoint_base = 'user'
-        get_endpoints = ('info', 'wishlist', 'friends', 'badges', 'beers')
-
-    class Venue(_Endpoint):
-        endpoint_base = 'venue'
-        get_endpoints = ('info',)
+        get_endpoints = ('info', 'checkins')
 
     class Brewery(_Endpoint):
         endpoint_base = 'brewery'
-        get_endpoints = ('info',)
+        get_endpoints = ('info', 'checkins')
+
+    class Checkin(_Endpoint):
+        endpoint_base = 'checkin'
+        get_endpoints = ('recent',)
+        post_endpoints = ('add', 'toast', 'addcomment', 'deletecomment')
+
+    class Friend(_Endpoint):
+        endpoint_base = 'friend'
+        get_endpoints = ('request', 'remove', 'accept', 'reject')
+
+    class Notifications(_Endpoint):
+        endpoint_base = 'notifications'
+
+    class Search(_Endpoint):
+        endpoint_base = 'search'
+        get_endpoints = ('beer', 'brewery')
+
+    class ThePub(_Endpoint):
+        endpoint_base = 'thepub'
+        get_endpoints = ('local',)
+
+    class User(_Endpoint):
+        endpoint_base = 'user'
+        get_endpoints = (
+            'checkins',
+            'info',
+            'wishlist',
+            'friends',
+            'badges',
+            'beers',
+            'pending',
+            'wishlist/add',
+            'wishlist/delete'
+        )
+
+    class Venue(_Endpoint):
+        endpoint_base = 'venue'
+        get_endpoints = ('info', 'checkins', 'foursquare_lookup')
