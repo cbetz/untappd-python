@@ -17,9 +17,9 @@ from __future__ import unicode_literals
 __version__ = 0.2
 __author__ = 'Christopher Betz'
 
-AUTH_ENDPOINT = 'https://untappd.com/oauth/authenticate/'
-TOKEN_ENDPOINT = 'https://untappd.com/oauth/authorize/'
-API_ENDPOINT = 'https://api.untappd.com/v4/'
+AUTH_URL = 'https://untappd.com/oauth/authenticate/'
+TOKEN_URL = 'https://untappd.com/oauth/authorize/'
+API_URL_BASE = 'https://api.untappd.com/v4'
 
 # Number of times to try http requests
 NUM_REQUEST_TRIES = 3
@@ -47,10 +47,20 @@ class Untappd(object):
 
     def _attach_endpoints(self):
         """Dynamically attach endpoint callables to this client"""
-        for name, endpoint in inspect.getmembers(self):
-            if inspect.isclass(endpoint) and issubclass(endpoint, self._Endpoint) and (endpoint is not self._Endpoint):
-                endpoint_instance = endpoint(self.requester)
-                setattr(self, endpoint_instance.endpoint, endpoint_instance)
+        for name, value in inspect.getmembers(self):
+            if inspect.isclass(value) and issubclass(value, self._Endpoint) and (value is not self._Endpoint):
+                endpoint_instance = value(self.requester)
+                setattr(self, endpoint_instance.endpoint_base, endpoint_instance)
+                if not hasattr(endpoint_instance, 'get_endpoints'):
+                    endpoint_instance.get_endpoints = ()
+                if not hasattr(endpoint_instance, 'post_endpoints'):
+                    endpoint_instance.post_endpoints = ()
+                if endpoint_instance.get_endpoints or endpoint_instance.post_endpoints:
+                    for endpoint in (endpoint_instance.get_endpoints + endpoint_instance.post_endpoints):
+                        function = endpoint_instance.create_endpoint_function(endpoint)
+                        setattr(endpoint_instance, endpoint.replace('/', '_'), function)
+                else:
+                    endpoint_instance.__call__ = endpoint_instance.create_endpoint_function()
 
     def set_access_token(self, access_token):
         """Update the access token to use"""
@@ -71,7 +81,7 @@ class Untappd(object):
                 'response_type': 'code',
                 'redirect_url': self.redirect_url,
             }
-            return '{0}?{1}'.format(AUTH_ENDPOINT, urllib.urlencode(payload))
+            return '{0}?{1}'.format(AUTH_URL, urllib.urlencode(payload))
 
         def get_access_token(self, code):
             """Gets the auth token from a user's response"""
@@ -86,7 +96,7 @@ class Untappd(object):
                 'code': unicode(code),
             }
             # Get the response from the token uri and attempt to parse
-            data = self.requester.GET(TOKEN_ENDPOINT, payload=payload, enrich_payload=False)
+            data = self.requester.request(TOKEN_URL, payload=payload, enrich_payload=False)
             return data.get('response').get('access_token')
 
     class Requester(object):
@@ -102,15 +112,7 @@ class Untappd(object):
             self.access_token = access_token
             self.userless = False
 
-        def GET(self, url, **kwargs):
-            """GET request that returns processed data"""
-            return self._request('GET', url, **kwargs)
-
-        def POST(self, url, **kwargs):
-            """POST request that returns processed data"""
-            return self._request('POST', url, **kwargs)
-
-        def _enrich_payload(self, payload={}):
+        def _enrich_payload(self, payload):
             """Enrich the payload dict"""
             if self.userless:
                 payload['client_id'] = self.client_id
@@ -119,17 +121,12 @@ class Untappd(object):
                 payload['access_token'] = self.access_token
             return payload
 
-        def _request(self, method, url, **kwargs):
+        def request(self, url, http_method='GET', payload={}, enrich_payload=True):
             """Performs the passed request and returns meaningful data"""
-            if kwargs is None:
-                kwargs = {}
-            url = '{url}{path}'.format(url=url, path=kwargs.get('path'))
-            if kwargs.get('enrich_payload', True):
-                payload = self._enrich_payload(kwargs.get('payload', {}))
-            else:
-                payload = kwargs.get('payload')
-            logging.debug('{method} url: {url} payload:{payload}'.format(
-                method=method,
+            if enrich_payload:
+                payload = self._enrich_payload(payload)
+            logging.debug('{http_method} url: {url} payload:{payload}'.format(
+                http_method=http_method,
                 url=url,
                 payload='* {0}'.format(payload) if payload else ''
             ))
@@ -137,7 +134,7 @@ class Untappd(object):
             try_number = 1
             while try_number <= NUM_REQUEST_TRIES:
                 try:
-                    return self._process_request(method, url, payload)
+                    return self._process_request(url, http_method, payload)
                 except UntappdException as e:
                     # Some errors don't bear repeating
                     if e.__class__ in [InvalidAuth]: raise
@@ -145,17 +142,13 @@ class Untappd(object):
                     try_number += 1
                 time.sleep(1)
 
-        def _process_request(self, method, url, payload):
+        def _process_request(self, url, http_method, payload):
             """Make the request and handle exception processing"""
             try:
-                if method == 'GET':
+                if http_method == 'GET':
                     response = requests.get(url, params=payload)
-                else if method == 'POST':
+                elif http_method == 'POST':
                     response = requests.post(url, data=payload)
-                else:
-                    error_message = 'Invalid request method'
-                    logging.error(error_message)
-                    raise UntappdException(error_message)
                 data = self._decode_json_response(response)
                 if response.status_code == requests.codes.ok:
                     return data
@@ -196,53 +189,30 @@ class Untappd(object):
             """Stores the request function for retrieving data"""
             self.requester = requester
 
-        def __call__(self, id):
-            return self.GET('info/{0}'.format(id))
+        def create_endpoint_function(self, endpoint=None):
+            def _function(self, id=None, **kwargs):
+                http_method = 'POST' if endpoint in self.post_endpoints else 'GET'
+                endpoint_parts = (endpoint, id)
+                return self._make_request(endpoint_parts, http_method, payload=kwargs)
+            return _function
 
-        def search(self, query, **kwargs):
-            if not self.searchable:
-                error_message = 'This Untappd API endpoint is not searchable'
-                logging.error(error_message)
-                raise UntappdException(error_message)
-            payload = {'q' : query}
-            if kwargs and self.search_options:
-                for option in self.search_options:
-                    if option in kwargs:
-                        payload[option] = kwargs[option]
-            return self.GET('search', payload=payload, reverse_parts=True)
-
-        def _expand_path(self, path=None, reverse_parts=False):
-            """Gets the expanded path, given this endpoint"""
-            if reverse_parts:
-                parts = (path, self.endpoint)
-            else:
-                parts = (self.endpoint, path)
-            return '/'.join(p for p in parts if p)
-
-        def GET(self, path=None, **kwargs):
-            """Use the requester to get the data"""
-            reverse_parts = kwargs.pop('reverse_parts', False)
-            return self.requester.GET(API_ENDPOINT, path=self._expand_path(path, reverse_parts), **kwargs)
-
-        def POST(self, path=None, **kwargs):
-            """Use the requester to post the data"""
-            reverse_parts = kwargs.pop('reverse_parts', False)
-            return self.requester.POST(API_ENDPOINT, path=self._expand_path(path, reverse_parts), **kwargs)
+        def _make_request(self, endpoint_parts, http_method, payload=None):
+            parts = ((API_URL_BASE, self.endpoint_base) + endpoint_parts)
+            url = '/'.join(p for p in parts if p)
+            return self.requester.request(url, http_method, payload)
 
     class Beer(_Endpoint):
-        endpoint = 'beer'
-        searchable = True
-        search_options = ('offset', 'limit', 'sort')
+        endpoint_base = 'beer'
+        get_endpoints = ('info',)
 
     class User(_Endpoint):
-        endpoint = 'user'
-        searchable = False
+        endpoint_base = 'user'
+        get_endpoints = ('info', 'wishlist', 'friends', 'badges', 'beers')
 
     class Venue(_Endpoint):
-        endpoint = 'venue'
-        searchable = False
+        endpoint_base = 'venue'
+        get_endpoints = ('info',)
 
     class Brewery(_Endpoint):
-        endpoint = 'brewery'
-        searchable = True
-        search_options = ('offset', 'limit')
+        endpoint_base = 'brewery'
+        get_endpoints = ('info',)
