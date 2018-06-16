@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # (c) 2013 Chris Betz
+from __future__ import unicode_literals
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -12,7 +13,6 @@ except ImportError:
 import inspect
 import time
 import requests
-from __future__ import unicode_literals
 
 __version__ = 0.2
 __author__ = 'Christopher Betz'
