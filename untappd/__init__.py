@@ -62,7 +62,7 @@ class Untappd(object):
                     function = endpoint_instance.create_endpoint_function(endpoint)
                     function_name = endpoint.replace('/', '_')
                     setattr(endpoint_instance, function_name, function)
-                    function.__name__ = function_name
+                    function.__name__ = str(function_name)
                     function.__doc__ = 'Tells the object to make a request to the {0} endpoint'.format(endpoint)
 
     def set_access_token(self, access_token):
