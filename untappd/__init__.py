@@ -193,7 +193,7 @@ class Untappd(object):
             self.requester = requester
 
         def create_endpoint_function(self, endpoint=None):
-            def _function(self, id=None, **kwargs):
+            def _function(id=None, **kwargs):
                 http_method = 'POST' if endpoint in self.post_endpoints else 'GET'
                 endpoint_parts = (endpoint, id)
                 return self._make_request(endpoint_parts, http_method, payload=kwargs)
