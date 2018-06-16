@@ -37,10 +37,15 @@ ERROR_TYPES = {
 
 class Untappd(object):
     """Untappd V4 API client"""
-    def __init__(self, client_id=None, client_secret=None, redirect_url=None):
+    def __init__(self, client_id=None, client_secret=None, access_token=None, redirect_url=None):
         """Sets up the API client object"""
+        # Either client_id and client_secret or access_token is required to access the API
+        if (not client_id or not client_secret) and not access_token:
+            error_message = 'You must specify a client_id and client_secret or an access_token'
+            logging.error(error_message)
+            raise UntappdException(error_message)
         # Set up requester
-        self.requester = self.Requester(client_id, client_secret)
+        self.requester = self.Requester(client_id, client_secret, access_token)
         # Set up OAuth
         self.oauth = self.OAuth(self.requester, client_id, client_secret, redirect_url)
         # Dynamically enable endpoints
@@ -105,16 +110,16 @@ class Untappd(object):
 
     class Requester(object):
         """API requesting object"""
-        def __init__(self, client_id=None, client_secret=None):
+        def __init__(self, client_id=None, client_secret=None, access_token=None):
             """Sets up the API requesting object"""
             self.client_id = client_id
             self.client_secret = client_secret
-            self.userless = True
+            self.set_access_token(access_token)
 
         def set_access_token(self, access_token):
             """Sets the OAuth access token for this requester"""
             self.access_token = access_token
-            self.userless = False
+            self.userless = not bool(access_token) # Userless if no access_token
 
         def _enrich_payload(self, payload):
             """Enriches the payload dict"""
