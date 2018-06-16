@@ -4,6 +4,8 @@
 from __future__ import unicode_literals
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
+# Uncomment the line below to show debug logging in console
+# logging.basicConfig(level=logging.DEBUG)
 
 try:
     import urllib.parse as urllib
@@ -55,12 +57,11 @@ class Untappd(object):
                     endpoint_instance.get_endpoints = ()
                 if not hasattr(endpoint_instance, 'post_endpoints'):
                     endpoint_instance.post_endpoints = ()
-                if endpoint_instance.get_endpoints or endpoint_instance.post_endpoints:
-                    for endpoint in (endpoint_instance.get_endpoints + endpoint_instance.post_endpoints):
-                        function = endpoint_instance.create_endpoint_function(endpoint)
-                        setattr(endpoint_instance, endpoint.replace('/', '_'), function)
-                else:
-                    endpoint_instance.__call__ = endpoint_instance.create_endpoint_function()
+                if not hasattr(endpoint_instance, 'is_callable'):
+                    endpoint_instance.is_callable = False
+                for endpoint in (endpoint_instance.get_endpoints + endpoint_instance.post_endpoints):
+                    function = endpoint_instance.create_endpoint_function(endpoint)
+                    setattr(endpoint_instance, endpoint.replace('/', '_'), function)
 
     def set_access_token(self, access_token):
         """Update the access token to use"""
@@ -192,6 +193,14 @@ class Untappd(object):
             """Stores the request function for retrieving data"""
             self.requester = requester
 
+        def __call__(self, id=None, **kwargs):
+            if not self.is_callable:
+                error_message = 'Endpoint {0} is not callable'.format(self.__class__.__name__)
+                logging.error(error_message) # body is printed in warning above
+                raise UntappdException(error_message)
+            endpoint_parts = (id,)
+            return self._make_request(endpoint_parts, 'GET', payload=kwargs)
+
         def create_endpoint_function(self, endpoint=None):
             def _function(id=None, **kwargs):
                 http_method = 'POST' if endpoint in self.post_endpoints else 'GET'
@@ -226,6 +235,7 @@ class Untappd(object):
 
     class Notifications(_Endpoint):
         endpoint_base = 'notifications'
+        is_callable = True
 
     class Search(_Endpoint):
         endpoint_base = 'search'
