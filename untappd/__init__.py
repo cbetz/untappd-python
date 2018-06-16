@@ -157,7 +157,7 @@ class Untappd(object):
                 logging.error(e)
                 raise UntappdException('Error connecting with Untappd API')
 
-        def _decode_json_response(response):
+        def _decode_json_response(self, response):
             """Decode a json response"""
             try:
                 return response.json()
@@ -165,7 +165,7 @@ class Untappd(object):
                 logging.error('Invalid response: {0}'.format(e))
                 raise UntappdException(e)
 
-        def _check_response(data):
+        def _check_response(self, data):
             """Processes the response data"""
             # Check the meta-data for why this request failed
             meta = data.get('meta')
