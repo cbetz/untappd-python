@@ -89,8 +89,9 @@ class Untappd(object):
         def get_access_token(self, code):
             """Gets the access token from a user's response"""
             if not code:
-                logging.error('Code not provided')
-                return None
+                error_message = 'Code not provided'
+                logging.error(error_message)
+                raise UntappdException(error_message)
             payload = {
                 'client_id': self.client_id,
                 'client_secret': self.client_secret,
