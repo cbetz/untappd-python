@@ -37,7 +37,7 @@ ERROR_TYPES = {
 
 class Untappd(object):
     """Untappd V4 API client"""
-    def __init__(self, client_id=None, client_secret=None, redirect_url=None,):
+    def __init__(self, client_id=None, client_secret=None, redirect_url=None):
         """Sets up the API client object"""
         # Set up requester
         self.requester = self.Requester(client_id, client_secret)
