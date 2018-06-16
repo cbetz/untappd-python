@@ -36,10 +36,9 @@ ERROR_TYPES = {
 }
 
 class Untappd(object):
-    """Untappd V4 API wrapper"""
-
+    """Untappd V4 API client"""
     def __init__(self, client_id=None, client_secret=None, redirect_url=None,):
-        """Sets up the api object"""
+        """Sets up the API client object"""
         # Set up requester
         self.requester = self.Requester(client_id, client_secret)
         # Set up OAuth
@@ -48,7 +47,7 @@ class Untappd(object):
         self._attach_endpoints()
 
     def _attach_endpoints(self):
-        """Dynamically attach endpoint callables to this client"""
+        """Dynamically attaches endpoint callables to this client"""
         for name, value in inspect.getmembers(self):
             if inspect.isclass(value) and issubclass(value, self._Endpoint) and (value is not self._Endpoint):
                 endpoint_instance = value(self.requester)
@@ -61,10 +60,13 @@ class Untappd(object):
                     endpoint_instance.is_callable = False
                 for endpoint in (endpoint_instance.get_endpoints + endpoint_instance.post_endpoints):
                     function = endpoint_instance.create_endpoint_function(endpoint)
-                    setattr(endpoint_instance, endpoint.replace('/', '_'), function)
+                    function_name = endpoint.replace('/', '_')
+                    setattr(endpoint_instance, function_name, function)
+                    function.__name__ = function_name
+                    function.__doc__ = 'Tells the object to make a request to the {0} endpoint'.format(endpoint)
 
     def set_access_token(self, access_token):
-        """Update the access token to use"""
+        """Updates the access token to use"""
         self.requester.set_access_token(access_token)
 
     class OAuth(object):
@@ -76,7 +78,7 @@ class Untappd(object):
             self.redirect_url = redirect_url
 
         def get_auth_url(self):
-            """Gets the url a user needs to access to give up a user token"""
+            """Gets the URL a user needs to access to get an access token"""
             payload = {
                 'client_id': self.client_id,
                 'response_type': 'code',
@@ -85,7 +87,7 @@ class Untappd(object):
             return '{0}?{1}'.format(AUTH_URL, urllib.urlencode(payload))
 
         def get_access_token(self, code):
-            """Gets the auth token from a user's response"""
+            """Gets the access token from a user's response"""
             if not code:
                 logging.error('Code not provided')
                 return None
@@ -101,20 +103,20 @@ class Untappd(object):
             return data.get('response').get('access_token')
 
     class Requester(object):
-        """Api requesting object"""
+        """API requesting object"""
         def __init__(self, client_id=None, client_secret=None):
-            """Sets up the api object"""
+            """Sets up the API requesting object"""
             self.client_id = client_id
             self.client_secret = client_secret
             self.userless = True
 
         def set_access_token(self, access_token):
-            """Set the OAuth token for this requester"""
+            """Sets the OAuth access token for this requester"""
             self.access_token = access_token
             self.userless = False
 
         def _enrich_payload(self, payload):
-            """Enrich the payload dict"""
+            """Enriches the payload dict"""
             if self.userless:
                 payload['client_id'] = self.client_id
                 payload['client_secret'] = self.client_secret
@@ -123,7 +125,7 @@ class Untappd(object):
             return payload
 
         def request(self, url, http_method='GET', payload={}, enrich_payload=True):
-            """Performs the passed request and returns meaningful data"""
+            """Tries to load data from an endpoint using retries"""
             if enrich_payload:
                 payload = self._enrich_payload(payload)
             logging.debug('{http_method} url: {url} payload:{payload}'.format(
@@ -131,7 +133,6 @@ class Untappd(object):
                 url=url,
                 payload='* {0}'.format(payload) if payload else ''
             ))
-            """Tries to load data from an endpoint using retries"""
             try_number = 1
             while try_number <= NUM_REQUEST_TRIES:
                 try:
@@ -146,7 +147,7 @@ class Untappd(object):
                 time.sleep(1)
 
         def _process_request(self, url, http_method, payload):
-            """Make the request and handle exception processing"""
+            """Makes the request and handles exception processing"""
             try:
                 if http_method == 'GET':
                     response = requests.get(url, params=payload)
@@ -161,7 +162,7 @@ class Untappd(object):
                 raise UntappdException('Error connecting with Untappd API')
 
         def _decode_json_response(self, response):
-            """Decode a json response"""
+            """Decodes a json response"""
             try:
                 return response.json()
             except ValueError as e:
@@ -184,7 +185,7 @@ class Untappd(object):
                     raise UntappdException(meta.get('error_detail'))
             else:
                 error_message = 'Response format invalid, missing meta property'
-                logging.error(error_message) # body is printed in warning above
+                logging.error(error_message)
                 raise UntappdException(error_message)
 
     class _Endpoint(object):
@@ -194,6 +195,7 @@ class Untappd(object):
             self.requester = requester
 
         def __call__(self, id=None, **kwargs):
+            """Tells the object to make a request if the endpoint base is callable"""
             if not self.is_callable:
                 error_message = 'Endpoint {0} is not callable'.format(self.__class__.__name__)
                 logging.error(error_message) # body is printed in warning above
@@ -202,6 +204,7 @@ class Untappd(object):
             return self._make_request(endpoint_parts, 'GET', payload=kwargs)
 
         def create_endpoint_function(self, endpoint=None):
+            """Dynamically creates a function to tell the object to make a request to an API endpoint"""
             def _function(id=None, **kwargs):
                 http_method = 'POST' if endpoint in self.post_endpoints else 'GET'
                 endpoint_parts = (endpoint, id)
@@ -209,43 +212,53 @@ class Untappd(object):
             return _function
 
         def _build_url(self, endpoint_parts):
+            """Builds the full API endpoint URL for the request"""
             parts = ((API_URL_BASE, self.endpoint_base) + endpoint_parts)
             return '/'.join(p for p in parts if p)
 
         def _make_request(self, endpoint_parts, http_method, payload=None):
+            """Uses the requester to make a request to an API endpoint"""
             url = self._build_url(endpoint_parts)
             return self.requester.request(url, http_method, payload)
 
     class Beer(_Endpoint):
+        """Beer endpoint class"""
         endpoint_base = 'beer'
         get_endpoints = ('info', 'checkins')
 
     class Brewery(_Endpoint):
+        """Brewery endpoint class"""
         endpoint_base = 'brewery'
         get_endpoints = ('info', 'checkins')
 
     class Checkin(_Endpoint):
+        """Checkin endpoint class"""
         endpoint_base = 'checkin'
         get_endpoints = ('recent',)
         post_endpoints = ('add', 'toast', 'addcomment', 'deletecomment')
 
     class Friend(_Endpoint):
+        """Friend endpoint class"""
         endpoint_base = 'friend'
         get_endpoints = ('request', 'remove', 'accept', 'reject')
 
     class Notifications(_Endpoint):
+        """Notifications endpoint class"""
         endpoint_base = 'notifications'
         is_callable = True
 
     class Search(_Endpoint):
+        """Search endpoint class"""
         endpoint_base = 'search'
         get_endpoints = ('beer', 'brewery')
 
     class ThePub(_Endpoint):
+        """ThePub endpoint class"""
         endpoint_base = 'thepub'
         get_endpoints = ('local',)
 
     class User(_Endpoint):
+        """User endpoint class"""
         endpoint_base = 'user'
         get_endpoints = (
             'checkins',
@@ -260,5 +273,6 @@ class Untappd(object):
         )
 
     class Venue(_Endpoint):
+        """Venue endpoint class"""
         endpoint_base = 'venue'
         get_endpoints = ('info', 'checkins', 'foursquare_lookup')
