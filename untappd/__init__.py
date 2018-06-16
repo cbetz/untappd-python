@@ -137,8 +137,10 @@ class Untappd(object):
                     return self._process_request(url, http_method, payload)
                 except UntappdException as e:
                     # Some errors don't bear repeating
-                    if e.__class__ in [InvalidAuth]: raise
-                    if (try_number == NUM_REQUEST_TRIES): raise
+                    if e.__class__ in [InvalidAuth]:
+                        raise
+                    if (try_number == NUM_REQUEST_TRIES):
+                        raise
                     try_number += 1
                 time.sleep(1)
 
@@ -171,7 +173,8 @@ class Untappd(object):
             meta = data.get('meta')
             if meta:
                 # see: https://untappd.com/api/docs/v4
-                if meta.get('code') in (200, 409): return data
+                if meta.get('code') in (200, 409):
+                    return data
                 exc = ERROR_TYPES.get(meta.get('error_type'))
                 if exc:
                     raise exc(meta.get('error_detail'))
