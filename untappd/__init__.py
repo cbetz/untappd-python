@@ -196,9 +196,12 @@ class Untappd(object):
                 return self._make_request(endpoint_parts, http_method, payload=kwargs)
             return _function
 
-        def _make_request(self, endpoint_parts, http_method, payload=None):
+        def _build_url(self, endpoint_parts):
             parts = ((API_URL_BASE, self.endpoint_base) + endpoint_parts)
-            url = '/'.join(p for p in parts if p)
+            return '/'.join(p for p in parts if p)
+
+        def _make_request(self, endpoint_parts, http_method, payload=None):
+            url = self._build_url(endpoint_parts)
             return self.requester.request(url, http_method, payload)
 
     class Beer(_Endpoint):
