@@ -50,6 +50,6 @@ Any additional parameters you want to include should be keyword arguments:
 
     brewery_info = client.brewery.info('BREWERY_ID', compact='true')
 
-If the endpoint URL has three components like [Add to Wish List](https://untappd.com/api/docs#addwish) (*/v4/user/wishlist/add*), you must separate the second and third component with an underscore:
+If the endpoint URL has three components, like [Add to Wish List](https://untappd.com/api/docs#addwish) (*/v4/user/wishlist/add*), you must separate the second and third component with an underscore:
 
     result = client.user.wishlist_add(bid='BEER_ID')
