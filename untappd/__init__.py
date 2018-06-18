@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 # (c) 2013 Chris Betz
 from __future__ import unicode_literals
+from builtins import str
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 # Uncomment the line below to show debug logging in console
@@ -102,7 +103,7 @@ class Untappd(object):
                 'client_secret': self.client_secret,
                 'response_type': 'code',
                 'redirect_url': self.redirect_url,
-                'code': unicode(code),
+                'code': str(code),
             }
             # Get the response from the token uri and attempt to parse
             data = self.requester.request(TOKEN_URL, payload=payload, enrich_payload=False)
@@ -220,7 +221,7 @@ class Untappd(object):
         def _build_url(self, endpoint_parts):
             """Builds the full API endpoint URL for the request"""
             parts = ((API_URL_BASE, self.endpoint_base) + endpoint_parts)
-            return '/'.join(p for p in parts if p)
+            return '/'.join(str(p) for p in parts if p)
 
         def _make_request(self, endpoint_parts, http_method, payload=None):
             """Uses the requester to make a request to an API endpoint"""
