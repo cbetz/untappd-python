@@ -23,8 +23,7 @@ setup(
         ],
     packages=find_packages(),
     install_requires=[
-        'httplib2>=0.7',
-        'poster>=0.8',
+        'requests',
         'future',
     ],
     license='MIT License',
