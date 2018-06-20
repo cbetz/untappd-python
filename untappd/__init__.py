@@ -17,7 +17,7 @@ import inspect
 import time
 import requests
 
-__version__ = 0.2
+__version__ = 0.3
 __author__ = 'Christopher Betz'
 
 AUTH_URL = 'https://untappd.com/oauth/authenticate/'
