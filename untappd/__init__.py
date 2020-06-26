@@ -38,7 +38,7 @@ ERROR_TYPES = {
 
 class Untappd(object):
     """Untappd V4 API client"""
-    def __init__(self, client_id=None, client_secret=None, access_token=None, redirect_url=None):
+    def __init__(self, client_id=None, client_secret=None, access_token=None, redirect_url=None, user_agent=None):
         """Sets up the API client object"""
         # Either client_id and client_secret or access_token is required to access the API
         if (not client_id or not client_secret) and not access_token:
@@ -46,7 +46,7 @@ class Untappd(object):
             logging.error(error_message)
             raise UntappdException(error_message)
         # Set up requester
-        self.requester = self.Requester(client_id, client_secret, access_token)
+        self.requester = self.Requester(client_id, client_secret, access_token, user_agent)
         # Set up OAuth
         self.oauth = self.OAuth(self.requester, client_id, client_secret, redirect_url)
         # Dynamically enable endpoints
@@ -111,10 +111,13 @@ class Untappd(object):
 
     class Requester(object):
         """API requesting object"""
-        def __init__(self, client_id=None, client_secret=None, access_token=None):
+        def __init__(self, client_id=None, client_secret=None, access_token=None, user_agent=None):
             """Sets up the API requesting object"""
             self.client_id = client_id
             self.client_secret = client_secret
+            self.headers =  requests.utils.default_headers()
+            if user_agent:
+                self.headers.update({'User-Agent': user_agent})
             self.set_access_token(access_token)
 
         def set_access_token(self, access_token):
@@ -157,9 +160,9 @@ class Untappd(object):
             """Makes the request and handles exception processing"""
             try:
                 if http_method == 'GET':
-                    response = requests.get(url, params=payload)
+                    response = requests.get(url, headers=self.headers, params=payload)
                 elif http_method == 'POST':
-                    response = requests.post(url, data=payload)
+                    response = requests.post(url, headers=self.headers, data=payload)
                 data = self._decode_json_response(response)
                 if response.status_code == requests.codes.ok:
                     return data

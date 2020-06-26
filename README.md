@@ -11,8 +11,8 @@ Based almost entirely on the excellent [foursquare](https://github.com/mLewisLog
 
 ## Usage
 
-    # Construct the client object
-    client = untappd.Untappd(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET', redirect_url='YOUR_REDIRECT_URL')
+    # Construct the client object (user_agent is optional, at least 'authorize' endpoint responds with 'HTTP 429 Too Many Requests' to default User-Agent header string like 'python-requests/2.24.0')
+    client = untappd.Untappd(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET', redirect_url='YOUR_REDIRECT_URL', user_agent='letmein')
 
 ### Authentication
 
