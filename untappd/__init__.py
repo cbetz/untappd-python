@@ -244,7 +244,7 @@ class Untappd(object):
     class Checkin(_Endpoint):
         """Checkin endpoint class"""
         endpoint_base = 'checkin'
-        get_endpoints = ('recent',)
+        get_endpoints = ('recent', 'view')
         post_endpoints = ('add', 'toast', 'addcomment', 'deletecomment')
 
     class Friend(_Endpoint):
