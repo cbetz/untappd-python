@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling", "requests", "future"]
+build-backend = "hatchling.build"
+
+[project]
+name = "untappd"
+version = "0.5"
+authors = [
+    { name = "Christopher Betz", email = "christopherwilliambetz@gmail.com" },
+]
+description = "Untappd wrapper library"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/cbetz/untappd-python"
+"Bug Tracker" = "https://github.com/cbetz/untappd-python/issues"
